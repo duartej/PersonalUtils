@@ -1,0 +1,5 @@
+Makefile
+setup.*
+cleanup.*
+*x86*
+genConf
