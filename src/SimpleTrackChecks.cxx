@@ -108,7 +108,7 @@ StatusCode SimpleTrackChecks::execute()
               {
                   std::cout << (*surface) << std::endl;
               }*/
-              // The problem seems to be focalized at the Bounds of the cylinder
+              // The problem seems to be focalized at the Bounds of the cylinder... Right, NULL pointer.
               if( surface->type() == Trk::Surface::SurfaceType::Cylinder )
               {
                   std::cout << "Address for CylinderBounds: " << &(surface->bounds()) << std::endl;
