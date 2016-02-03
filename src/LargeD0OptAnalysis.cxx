@@ -73,12 +73,18 @@ LargeD0OptAnalysis::LargeD0OptAnalysis(const std::string& name, ISvcLocator* pSv
     m_track_genMatched(nullptr),
     m_track_charge(nullptr),
     m_track_pdgId(nullptr),
+    m_track_nRecoTracks(nullptr),
+    m_track_nMatchedTracks(nullptr),
     m_track_d0(nullptr),
     m_track_z0(nullptr),
     m_track_pt(nullptr),
     m_track_phi0(nullptr),
     m_track_eta(nullptr),
     m_track_prob(nullptr),
+    m_vector_reg_tracks_int{&m_track_genMatched, &m_track_charge, 
+                                   &m_track_pdgId, &m_track_nRecoTracks, &m_track_nMatchedTracks},
+    m_vector_reg_tracks_float{&m_track_d0, &m_track_z0, &m_track_pt, &m_track_phi0, 
+                                   &m_track_prob, &m_track_eta},
     m_tree_recoTracks(nullptr),
     m_dv_x(nullptr),
     m_dv_y(nullptr),
@@ -93,6 +99,11 @@ LargeD0OptAnalysis::LargeD0OptAnalysis(const std::string& name, ISvcLocator* pSv
     m_genpart_pt(nullptr),
     m_genpart_eta(nullptr),
     m_genpart_phi(nullptr), 
+    m_vector_reg_genpart_int{&m_genpart_trackMatched, &m_genpart_pdgId, 
+                                   &m_genpart_dvID},
+    m_vector_reg_genpart_float{&m_dv_x, &m_dv_y, &m_dv_z, &m_genpart_vx, &m_genpart_vy, 
+                                   &m_genpart_vz, &m_genpart_pt, &m_genpart_eta,
+                                   &m_genpart_phi},
     m_tree_mc(nullptr),
     m_populatedCache(0),
     m_pdg_LLP(1000022),
@@ -178,16 +189,16 @@ StatusCode LargeD0OptAnalysis::initialize()
     m_tree_mc->Branch("dv_y",&m_dv_y);
     m_tree_mc->Branch("dv_z",&m_dv_z);
     
-    m_tree_mc->Branch("genpart_trackMatched",&m_genpart_trackMatched);
-    m_tree_mc->Branch("genpart_pdgId",&m_genpart_pdgId);
-    m_tree_mc->Branch("genpart_charge",&m_genpart_charge);
-    m_tree_mc->Branch("genpart_dvID",&m_genpart_dvID);
-    m_tree_mc->Branch("genpart_vx",&m_genpart_vx);
-    m_tree_mc->Branch("genpart_vy",&m_genpart_vy);
-    m_tree_mc->Branch("genpart_vz",&m_genpart_vz);
-    m_tree_mc->Branch("genpart_pt",&m_genpart_pt);
-    m_tree_mc->Branch("genpart_eta",&m_genpart_eta);
-    m_tree_mc->Branch("genpart_phi",&m_genpart_phi);
+    m_tree_mc->Branch("trackMatched",&m_genpart_trackMatched);
+    m_tree_mc->Branch("pdgId",&m_genpart_pdgId);
+    m_tree_mc->Branch("charge",&m_genpart_charge);
+    m_tree_mc->Branch("dvID",&m_genpart_dvID);
+    m_tree_mc->Branch("vx",&m_genpart_vx);
+    m_tree_mc->Branch("vy",&m_genpart_vy);
+    m_tree_mc->Branch("vz",&m_genpart_vz);
+    m_tree_mc->Branch("pt",&m_genpart_pt);
+    m_tree_mc->Branch("eta",&m_genpart_eta);
+    m_tree_mc->Branch("phi",&m_genpart_phi);
 
     // Initialization and registration: recoTracks
     m_tree_recoTracks = new TTree("RecoTracks",m_trackCollectionName.c_str() );
@@ -196,6 +207,8 @@ StatusCode LargeD0OptAnalysis::initialize()
     m_tree_recoTracks->Branch("genMatched",&m_track_genMatched);
     m_tree_recoTracks->Branch("charge",&m_track_charge);
     m_tree_recoTracks->Branch("pdgId",&m_track_pdgId);
+    m_tree_recoTracks->Branch("nRecoTracks",&m_track_nRecoTracks);
+    m_tree_recoTracks->Branch("nMatchedTracks",&m_track_nMatchedTracks);
     m_tree_recoTracks->Branch("d0",&m_track_d0);
     m_tree_recoTracks->Branch("z0",&m_track_z0);
     m_tree_recoTracks->Branch("pt",&m_track_pt);
@@ -475,7 +488,7 @@ void LargeD0OptAnalysis::createGenParticleTrackMap(const TrackCollection * recoT
 
 void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks, const TrackTruthCollection * truthMap)
 {
-    this->prepareTrackTreeRelated();
+    this->prepareTrackTreeRelated(recoTracks->size());
 
     // How to avoid duplicated tracks??
     // XXX: Be carefull!! Seems duplicated tracks because the front-TSOS
@@ -542,7 +555,6 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
         if( it_truthMap != truthMap->end() )
         {
             if( (*it_truthMap).second.particleLink().isValid() )
-            //if( (*it_truthMap).second.particleLink().cptr() != nullptr )
             {
                 m_track_genMatched->push_back(1);
                 m_track_pdgId->push_back( (*it_truthMap).second.particleLink()->pdg_id() );
@@ -620,63 +632,69 @@ void LargeD0OptAnalysis::storeGenParticleInfo(const HepMC::GenParticle * p)
     m_genpart_phi->push_back(p->momentum().phi()); 
 }
 
-void LargeD0OptAnalysis::prepareTrackTreeRelated()
+void LargeD0OptAnalysis::prepareTrackTreeRelated(const unsigned int & recoSize)
 {
-    m_track_genMatched  = new std::vector<int>;
-    m_track_pdgId  = new std::vector<int>;
-    m_track_charge = new std::vector<int>;
-    m_track_d0   = new std::vector<float>;
-    m_track_z0     = new std::vector<float>;
-    m_track_pt     = new std::vector<float>;
-    m_track_phi0     = new std::vector<float>;
-    m_track_eta     = new std::vector<float>;
-    m_track_prob    = new std::vector<float>;
+    for(auto & trackPointerVectorI: m_vector_reg_tracks_int)
+    {
+        (*trackPointerVectorI) = new std::vector<int>;
+        (*trackPointerVectorI)->reserve(recoSize);
+    }
+    for(auto & trackPointerVectorF: m_vector_reg_tracks_float)
+    {
+        (*trackPointerVectorF) = new std::vector<float>;
+        (*trackPointerVectorF)->reserve(recoSize);
+    }
 }
 
 void LargeD0OptAnalysis::deallocateTrackTreeRelated()
 {
-    if(m_track_genMatched ) delete m_track_genMatched ;
-    if(m_track_pdgId ) delete m_track_pdgId ;
-    if(m_track_charge) delete m_track_charge ;
-    if(m_track_d0    ) delete m_track_d0 ;
-    if(m_track_z0    ) delete m_track_z0 ;
-    if(m_track_pt    ) delete m_track_pt ;
-    if(m_track_phi0  ) delete m_track_phi0 ;
-    if(m_track_eta   ) delete m_track_eta ;
-    if(m_track_prob  ) delete m_track_prob ;
+    for(auto & trackPointerVectorI: m_vector_reg_tracks_int)
+    {
+        if( *trackPointerVectorI )
+        {
+            delete *trackPointerVectorI;
+            (*trackPointerVectorI) = nullptr;
+        }
+    }
+    for(auto & trackPointerVectorF: m_vector_reg_tracks_float)
+    {
+        if( *trackPointerVectorF )
+        {
+            delete (*trackPointerVectorF);
+            (*trackPointerVectorF) = nullptr;
+        }
+    }
 }
 
 void LargeD0OptAnalysis::prepareMCTruthTreeRelated()
 {
     m_current_dvID = -1;
-    m_dv_x           = new std::vector<float>;
-    m_dv_y           = new std::vector<float>;
-    m_dv_z           = new std::vector<float>;
-    m_genpart_trackMatched  = new std::vector<int>;
-    m_genpart_pdgId  = new std::vector<int>;
-    m_genpart_charge = new std::vector<int>;
-    m_genpart_dvID   = new std::vector<int>;
-    m_genpart_vx     = new std::vector<float>;
-    m_genpart_vy     = new std::vector<float>;
-    m_genpart_vz     = new std::vector<float>;
-    m_genpart_pt     = new std::vector<float>;
-    m_genpart_eta    = new std::vector<float>;
-    m_genpart_phi    = new std::vector<float>; 
+    for(auto & genPointerVectorI: m_vector_reg_genpart_int)
+    {
+        (*genPointerVectorI) = new std::vector<int>;
+    }
+    for(auto & genPointerVectorF: m_vector_reg_genpart_float)
+    {
+        (*genPointerVectorF) = new std::vector<float>;
+    }
 }
 
 void LargeD0OptAnalysis::deallocateMCTruthTreeRelated()
 {
-    if(m_dv_x          ) delete m_dv_x ;
-    if(m_dv_y          ) delete m_dv_y ;
-    if(m_dv_z          ) delete m_dv_z ;
-    if(m_genpart_trackMatched ) delete m_genpart_trackMatched ;
-    if(m_genpart_pdgId ) delete m_genpart_pdgId ;
-    if(m_genpart_charge) delete m_genpart_charge ;
-    if(m_genpart_dvID  ) delete m_genpart_dvID ;
-    if(m_genpart_vx    ) delete m_genpart_vx ;
-    if(m_genpart_vy    ) delete m_genpart_vy ;
-    if(m_genpart_vz    ) delete m_genpart_vz ;
-    if(m_genpart_pt    ) delete m_genpart_pt ;
-    if(m_genpart_eta   ) delete m_genpart_eta ;
-    if(m_genpart_phi   ) delete m_genpart_phi ; 
+    for(auto & genPointerVectorI: m_vector_reg_genpart_int)
+    {
+        if( *genPointerVectorI )
+        {
+            delete *genPointerVectorI;
+            (*genPointerVectorI) = nullptr;
+        }
+    }
+    for(auto & genPointerVectorF: m_vector_reg_genpart_float)
+    {
+        if( *genPointerVectorF )
+        {
+            delete (*genPointerVectorF);
+            (*genPointerVectorF) = nullptr;
+        }
+    }
 }

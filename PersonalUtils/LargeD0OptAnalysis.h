@@ -95,7 +95,7 @@ class LargeD0OptAnalysis : public AthAlgorithm
         
         /** reco track tree related */
         void storeRecoTracksInfo(const TrackCollection * recoTracks, const TrackTruthCollection * truthMap);
-        void prepareTrackTreeRelated();
+        void prepareTrackTreeRelated(const unsigned int & trackSize);
         void deallocateTrackTreeRelated();
 
 
@@ -133,14 +133,17 @@ class LargeD0OptAnalysis : public AthAlgorithm
         std::vector<int>   * m_track_genMatched;
         std::vector<int>   * m_track_charge;
         std::vector<int>   * m_track_pdgId;
+        std::vector<int>   * m_track_nRecoTracks;
+        std::vector<int>   * m_track_nMatchedTracks;
         std::vector<float> * m_track_d0;
         std::vector<float> * m_track_z0;
         std::vector<float> * m_track_pt;
         std::vector<float> * m_track_phi0;
         std::vector<float> * m_track_eta;
         std::vector<float> * m_track_prob;
+        std::vector<std::vector<int> **>   m_vector_reg_tracks_int; 
+        std::vector<std::vector<float> **> m_vector_reg_tracks_float; 
         TTree * m_tree_recoTracks;
-
 
         /** MC truth tree */
         std::vector<float> * m_dv_x;
@@ -156,6 +159,8 @@ class LargeD0OptAnalysis : public AthAlgorithm
         std::vector<float> * m_genpart_pt;
         std::vector<float> * m_genpart_eta;
         std::vector<float> * m_genpart_phi; 
+        std::vector<std::vector<int> **>   m_vector_reg_genpart_int; 
+        std::vector<std::vector<float> **> m_vector_reg_genpart_float; 
         TTree * m_tree_mc;
 
         /** MC Truth particles info */
