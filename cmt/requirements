@@ -6,18 +6,26 @@ use AtlasPolicy			AtlasPolicy-*
 use AthenaBaseComps     AthenaBaseComps-*       Control
 
 use GaudiInterface		GaudiInterface-*		External
-
+#use GeneratorObjects    GeneratorObjects-*      Generators
+use TrkTrack            TrkTrack-*              Tracking/TrkEvent
 
 private
 use TrkSpacePoint       TrkSpacePoint-*         Tracking/TrkEvent
-use TrkTrack            TrkTrack-*              Tracking/TrkEvent
+#use TrkTrack            TrkTrack-*              Tracking/TrkEvent
+use TrkTruthData        TrkTruthData-*          Tracking/TrkEvent
 use TrkSurfaces         TrkSurfaces-*           Tracking/TrkDetDescr
 
 use SiSpacePoint        SiSpacePoint-*          InnerDetector/InDetRecEvent
+use TrkTruthData        TrkTruthData-*          Tracking/TrkEvent
+use TrkPrepRawData      TrkPrepRawData-*        Tracking/TrkEvent
 
 #use xAODEventInfo       xAODEventInfo-*         Event/xAOD
 
+use GeneratorObjects    GeneratorObjects-*      Generators
+use AtlasHepMC          AtlasHepMC-*            External
 use AtlasROOT           AtlasROOT-*             External
+use HepPDT              *                       LCG_Interfaces
+
 end_private
 
 
