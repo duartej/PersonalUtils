@@ -124,23 +124,39 @@ class LargeD0OptAnalysis : public AthAlgorithm
         std::string m_trackCollectionName;
         std::string m_trackTruthCollectionName;
 
-        /** SpacePoint Tree */
+        /** SpacePoint Tree: SCT */
         std::string m_streamHist;
         SPPosition m_lightSP;
         TTree * m_tree;
+        /** Pixel */
+        SPPosition m_lightSP_Pixel;
+        TTree * m_tree_pixel;
         
         /** recotrack tree */
+        std::vector<int>   * m_track_evtNumber;
         std::vector<int>   * m_track_genMatched;
         std::vector<int>   * m_track_charge;
         std::vector<int>   * m_track_pdgId;
-        std::vector<int>   * m_track_nRecoTracks;
-        std::vector<int>   * m_track_nMatchedTracks;
         std::vector<float> * m_track_d0;
         std::vector<float> * m_track_z0;
         std::vector<float> * m_track_pt;
         std::vector<float> * m_track_phi0;
         std::vector<float> * m_track_eta;
         std::vector<float> * m_track_prob;
+        // hit related
+        std::vector<int>   * m_track_hits_nBLayers;
+        std::vector<int>   * m_track_hits_nPixelHoles;
+        std::vector<int>   * m_track_hits_nPixelHits;
+        std::vector<int>   * m_track_hits_nGangedPixel;
+        std::vector<int>   * m_track_hits_nSCTHits;
+        std::vector<int>   * m_track_hits_nSCTHoles;
+        std::vector<int>   * m_track_hits_nOutliers;
+        std::vector<int>   * m_track_hits_nBLayerSharedHits;
+        std::vector<int>   * m_track_hits_nPixelSharedHits;
+        std::vector<int>   * m_track_hits_nSCTSharedHits;
+        std::vector<int>   * m_track_hits_nSCTDoubleHoles;
+        std::vector<int>   * m_track_hits_nContribPixelLayers;
+        std::vector<int>   * m_track_hits_nBLayerOutliers;
         std::vector<std::vector<int> **>   m_vector_reg_tracks_int; 
         std::vector<std::vector<float> **> m_vector_reg_tracks_float; 
         TTree * m_tree_recoTracks;
@@ -149,6 +165,7 @@ class LargeD0OptAnalysis : public AthAlgorithm
         std::vector<float> * m_dv_x;
         std::vector<float> * m_dv_y;
         std::vector<float> * m_dv_z;
+        std::vector<int>   * m_genpart_evtNumber;
         std::vector<int>   * m_genpart_trackMatched;
         std::vector<int>   * m_genpart_pdgId;
         std::vector<int>   * m_genpart_charge;

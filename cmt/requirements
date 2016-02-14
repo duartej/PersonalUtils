@@ -14,6 +14,7 @@ use TrkSpacePoint       TrkSpacePoint-*         Tracking/TrkEvent
 #use TrkTrack            TrkTrack-*              Tracking/TrkEvent
 use TrkTruthData        TrkTruthData-*          Tracking/TrkEvent
 use TrkSurfaces         TrkSurfaces-*           Tracking/TrkDetDescr
+use TrkTrackSummary     TrkTrackSummary-*       Tracking/TrkEvent
 
 use SiSpacePoint        SiSpacePoint-*          InnerDetector/InDetRecEvent
 use TrkTruthData        TrkTruthData-*          Tracking/TrkEvent
