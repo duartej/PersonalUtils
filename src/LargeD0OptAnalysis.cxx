@@ -262,7 +262,7 @@ StatusCode LargeD0OptAnalysis::initialize()
     m_tree_mc = new TTree("GenTree","MC Truth" );
     CHECK( tHistSvc->regTree(std::string("/"+m_streamHist+"/mctruth").c_str(),m_tree_mc) );
 
-    m_tree_mc->Branch("evtNumber",&m_current_EvtNumber);
+    m_tree_mc->Branch("evtNumber",&m_genpart_evtNumber);
     m_tree_mc->Branch("dv_x",&m_dv_x);
     m_tree_mc->Branch("dv_y",&m_dv_y);
     m_tree_mc->Branch("dv_z",&m_dv_z);
@@ -282,7 +282,7 @@ StatusCode LargeD0OptAnalysis::initialize()
     m_tree_recoTracks = new TTree("RecoTracks",m_trackCollectionName.c_str() );
     CHECK( tHistSvc->regTree(std::string("/"+m_streamHist+"/recoTracks").c_str(),m_tree_recoTracks) );
 
-    m_tree_recoTracks->Branch("evtNumber",&m_current_EvtNumber);
+    m_tree_recoTracks->Branch("evtNumber",&m_track_evtNumber);
     m_tree_recoTracks->Branch("genMatched",&m_track_genMatched);
     m_tree_recoTracks->Branch("charge",&m_track_charge);
     m_tree_recoTracks->Branch("pdgId",&m_track_pdgId);
@@ -344,12 +344,6 @@ StatusCode LargeD0OptAnalysis::execute()
         return StatusCode::FAILURE;
     }
     
-    // Monte Carlo truth related ------------------------------------------------
-    // --- Get the number of MC-truth final charged particles 
-    //     from the displaced vertex (with some kinetic cuts)
-    const std::unordered_set<const HepMC::GenParticle *> dv_gen_charged = getSignalChargedParticles(mcColl);
-
-    
     // Track-related --------------------------------------------------------
 
     //// Obtain the reco tracks
@@ -370,11 +364,22 @@ StatusCode LargeD0OptAnalysis::execute()
         return StatusCode::FAILURE;
     }
 
-    // Store reco tracks info
-    this->storeRecoTracksInfo(trkCol,truthMap);
-
+    // --> XXX Be careful the order calling the functions is important!!!
+    //     The algorithm should be re-designed, there is inconsistencies...
+    //     FIXME: Anyway, the algorithm should call tools (to be implemented)
+    
     // Create the map: GenParticle (HepMCParticleLink) to reco Track
     this->createGenParticleTrackMap(trkCol,truthMap);
+
+    // Monte Carlo truth related ------------------------------------------------
+    // --- Get the number of MC-truth final charged particles 
+    //     from the displaced vertex (with some kinetic cuts)
+    const std::unordered_set<const HepMC::GenParticle *> dv_gen_charged = getSignalChargedParticles(mcColl);
+
+    
+    // Store reco tracks info
+    this->storeRecoTracksInfo(trkCol,truthMap);
+    
     
     // --- Truth hits: 
     const PRD_MultiTruthCollection * prdTruthCollection = nullptr;
