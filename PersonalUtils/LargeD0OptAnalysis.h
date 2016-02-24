@@ -112,6 +112,7 @@ class LargeD0OptAnalysis : public AthAlgorithm
         std::string m_OverlapSPName;
 
         /** the key of the PRD truth container */
+        std::string m_PixelPRDTruth;
         std::string m_SCTPRDTruth;
 
         /** the key of the Track Containers */
