@@ -69,7 +69,7 @@ namespace spacepoints_functions
                 sp_struct.z = sp->globalPosition().z();
                 sp_struct.r = sp->r();
                 sp_struct.phi = sp->phi();
-                sp_struct.nClustersFromSignal = 0;
+                sp_struct.clusterFromSignal = 0;
                 // covariance matrix
                 sp_struct.sigma_xx = sp->globCovariance()(0,0);
                 sp_struct.sigma_xy = sp->globCovariance()(0,1);            
@@ -86,12 +86,12 @@ namespace spacepoints_functions
                 for(PRD_MultiTruthCollection::const_iterator mc = prdTruthCollection->find(clusters.first->identify()); 
                         mc != prdTruthCollection->end(); ++mc)
                 {
-                    // the cluster was generated at least by one signal particle, so don't care if it was 
+                    // the cluster was generated at least by one signal particle, 
+                    // and the particleso don't care if it was 
                     // more than one signal particle... break the for
                     if( daughters_llp.find( (*mc).second.cptr()  ) != daughters_llp.end() )
                     {
-                        sp_struct.nClustersFromSignal = 1;
-                        break;
+                        sp_struct.clusterFromSignal = 1; 
                     }
                 }
                 tree->Fill();
@@ -253,14 +253,14 @@ StatusCode LargeD0OptAnalysis::initialize()
     m_tree = new TTree("SpacePoint_STEP","SpacePoint finder step" );
     CHECK( tHistSvc->regTree(std::string("/"+m_streamHist+"/SPacePoints_STEP").c_str(),m_tree) );
 
-    m_tree->Branch("sct",&m_lightSP,"evtNumber/I:nClustersFromSignal/I:x/F:y/F:z/F:r/F:phi/F:"\
-            "sigma_xx/F:sigma_xy/F:sigma_xz/F:sigma_yy/F:sigma_yz/F:sigma_zz/F");
+    m_tree->Branch("sct",&m_lightSP,"evtNumber/I:clusterFromSignal/I:"\
+            "x/F:y/F:z/F:r/F:phi/F:sigma_xx/F:sigma_xy/F:sigma_xz/F:sigma_yy/F:sigma_yz/F:sigma_zz/F");
     
     m_tree_pixel = new TTree("SpacePoint_PIXEL","SpacePoint finder step for pixel" );
     CHECK( tHistSvc->regTree(std::string("/"+m_streamHist+"/SPacePoints_PIXEL").c_str(),m_tree_pixel) );
 
-    m_tree_pixel->Branch("pixel",&m_lightSP_Pixel,"evtNumber/I:nClustersFromSignal/I:x/F:y/F:z/F:r/F:phi/F:"\
-            "sigma_xx/F:sigma_xy/F:sigma_xz/F:sigma_yy/F:sigma_yz/F:sigma_zz/F");
+    m_tree_pixel->Branch("pixel",&m_lightSP_Pixel,"evtNumber/I:clusterFromSignal/I:"\
+            "x/F:y/F:z/F:r/F:phi/F:sigma_xx/F:sigma_xy/F:sigma_xz/F:sigma_yy/F:sigma_yz/F:sigma_zz/F");
     
     // Initialization and registration of the histograms/tree
     m_tree_mc = new TTree("GenTree","MC Truth" );

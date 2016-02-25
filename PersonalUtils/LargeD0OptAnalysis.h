@@ -49,7 +49,7 @@ class TrackTruthCollection;
 struct SPPosition 
 {
     int   evtNumber;
-    int   nClustersFromSignal;
+    int   clusterFromSignal;
     float x;
     float y;
     float z;
