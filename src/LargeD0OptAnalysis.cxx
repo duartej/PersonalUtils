@@ -161,6 +161,7 @@ LargeD0OptAnalysis::LargeD0OptAnalysis(const std::string& name, ISvcLocator* pSv
     m_dv_x(nullptr),
     m_dv_y(nullptr),
     m_dv_z(nullptr),
+    m_dv_betagamma(nullptr),
     m_genpart_evtNumber(nullptr),
     m_genpart_trackMatched(nullptr),
     m_genpart_pdgId(nullptr),
@@ -175,7 +176,8 @@ LargeD0OptAnalysis::LargeD0OptAnalysis(const std::string& name, ISvcLocator* pSv
     m_vector_reg_genpart_int{&m_genpart_evtNumber,
                                    &m_genpart_trackMatched, &m_genpart_pdgId, 
                                    &m_genpart_dvID},
-    m_vector_reg_genpart_float{&m_dv_x, &m_dv_y, &m_dv_z, &m_genpart_vx, &m_genpart_vy, 
+    m_vector_reg_genpart_float{&m_dv_x, &m_dv_y, &m_dv_z, &m_dv_betagamma,
+                                   &m_genpart_vx, &m_genpart_vy, 
                                    &m_genpart_vz, &m_genpart_pt, &m_genpart_eta,
                                    &m_genpart_phi},
     m_tree_mc(nullptr),
@@ -270,6 +272,7 @@ StatusCode LargeD0OptAnalysis::initialize()
     m_tree_mc->Branch("dv_x",&m_dv_x);
     m_tree_mc->Branch("dv_y",&m_dv_y);
     m_tree_mc->Branch("dv_z",&m_dv_z);
+    m_tree_mc->Branch("dv_betagamma",&m_dv_betagamma);
     
     m_tree_mc->Branch("trackMatched",&m_genpart_trackMatched);
     m_tree_mc->Branch("pdgId",&m_genpart_pdgId);
@@ -726,6 +729,8 @@ void LargeD0OptAnalysis::storeDV( const HepMC::GenVertex * dv)
     m_dv_x->push_back(dv->point3d().x());
     m_dv_y->push_back(dv->point3d().y());
     m_dv_z->push_back(dv->point3d().z());
+    const HepMC::GenParticle * llp =  *(dv->particles_in_const_begin());
+    m_dv_betagamma->push_back(llp->momentum().rho()/llp->momentum().m());
     ++m_current_dvID;
 }
 

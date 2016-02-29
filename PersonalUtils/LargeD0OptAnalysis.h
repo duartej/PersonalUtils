@@ -166,6 +166,7 @@ class LargeD0OptAnalysis : public AthAlgorithm
         std::vector<float> * m_dv_x;
         std::vector<float> * m_dv_y;
         std::vector<float> * m_dv_z;
+        std::vector<float> * m_dv_betagamma;
         std::vector<int>   * m_genpart_evtNumber;
         std::vector<int>   * m_genpart_trackMatched;
         std::vector<int>   * m_genpart_pdgId;
