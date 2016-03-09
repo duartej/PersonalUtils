@@ -133,6 +133,7 @@ LargeD0OptAnalysis::LargeD0OptAnalysis(const std::string& name, ISvcLocator* pSv
     m_track_phi0(nullptr),
     m_track_eta(nullptr),
     m_track_prob(nullptr),
+    m_track_radiusFirstHit(nullptr),
     m_track_hits_nBLayers(nullptr),
     m_track_hits_nPixelHoles(nullptr),
     m_track_hits_nPixelHits(nullptr),
@@ -156,7 +157,7 @@ LargeD0OptAnalysis::LargeD0OptAnalysis(const std::string& name, ISvcLocator* pSv
                      &m_track_hits_nSCTDoubleHoles,&m_track_hits_nContribPixelLayers,
                      &m_track_hits_nBLayerOutliers},
     m_vector_reg_tracks_float{&m_track_d0, &m_track_z0, &m_track_pt, &m_track_phi0, 
-                     &m_track_prob, &m_track_eta},
+                     &m_track_prob, &m_track_eta,&m_track_radiusFirstHit},
     m_tree_recoTracks(nullptr),
     m_dv_x(nullptr),
     m_dv_y(nullptr),
@@ -300,6 +301,7 @@ StatusCode LargeD0OptAnalysis::initialize()
     m_tree_recoTracks->Branch("eta",&m_track_eta);
     m_tree_recoTracks->Branch("prob",&m_track_prob);
     // hits
+    m_tree_recoTracks->Branch("radiusFirstHit",&m_track_radiusFirstHit);
     m_tree_recoTracks->Branch("nBLayers",&m_track_hits_nBLayers);
     m_tree_recoTracks->Branch("nPixelHoles",&m_track_hits_nPixelHoles);
     m_tree_recoTracks->Branch("nPixelHits",&m_track_hits_nPixelHits);
@@ -632,6 +634,8 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
                     m_track_phi0->push_back( perigee->parameters()[Trk::phi0] );
                     m_track_eta->push_back( perigee->eta() );
                     m_track_charge->push_back( perigee->charge() );
+                    const Amg::Vector3D pfh = perigee->position();
+                    m_track_radiusFirstHit->push_back(sqrt(pfh[0]*pfh[0]+pfh[1]*pfh[1]));
                     pfilled = true;
                 }
             }

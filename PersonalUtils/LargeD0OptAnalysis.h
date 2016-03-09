@@ -145,6 +145,7 @@ class LargeD0OptAnalysis : public AthAlgorithm
         std::vector<float> * m_track_eta;
         std::vector<float> * m_track_prob;
         // hit related
+        std::vector<float> * m_track_radiusFirstHit;
         std::vector<int>   * m_track_hits_nBLayers;
         std::vector<int>   * m_track_hits_nPixelHoles;
         std::vector<int>   * m_track_hits_nPixelHits;
