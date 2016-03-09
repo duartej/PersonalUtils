@@ -8,6 +8,8 @@ use AthenaBaseComps     AthenaBaseComps-*       Control
 use GaudiInterface		GaudiInterface-*		External
 #use GeneratorObjects    GeneratorObjects-*      Generators
 use TrkTrack            TrkTrack-*              Tracking/TrkEvent
+use TrkExInterfaces     TrkExInterfaces-*       Tracking/TrkExtrapolation
+
 
 private
 use TrkSpacePoint       TrkSpacePoint-*         Tracking/TrkEvent

@@ -15,6 +15,10 @@
 //#include "StoreGate/StoreGateSvc.h"
 #include "AthenaBaseComps/AthAlgorithm.h"
 
+// tools
+#include "GaudiKernel/ToolHandle.h"
+#include "TrkExInterfaces/IExtrapolator.h"
+
 #include "TrkTrack/TrackCollection.h"
 //#include "GeneratorObjects/HepMcParticleLink.h"
 
@@ -193,6 +197,9 @@ class LargeD0OptAnalysis : public AthAlgorithm
 
         /** Particle data table */
         const HepPDT::ParticleDataTable * m_pdt;
+
+        /** Extrapolator **/
+        ToolHandle<Trk::IExtrapolator>  m_extrapolator; 
 };
 
 #endif // LARGED0OPTANALYSIS_H

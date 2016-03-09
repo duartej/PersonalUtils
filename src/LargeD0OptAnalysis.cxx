@@ -184,7 +184,8 @@ LargeD0OptAnalysis::LargeD0OptAnalysis(const std::string& name, ISvcLocator* pSv
     m_tree_mc(nullptr),
     m_populatedCache(0),
     m_pdg_LLP(1000022),
-    m_pdt(nullptr)
+    m_pdt(nullptr),
+    m_extrapolator("Trk::Extrapolator")
 {
     /** switches to control the analysis through job options */
     declareProperty( "MCTruthCollection",  m_mcCollName   );
@@ -251,6 +252,13 @@ StatusCode LargeD0OptAnalysis::initialize()
                 "ParticleProperties Service !!");
         return StatusCode::FAILURE;
     }
+
+    // Retrieve the extrapolator
+    if( m_extrapolator.retrieve().isFailure()) 
+    {
+        ATH_MSG_ERROR("Could not retrieve "<< m_extrapolator);
+        return StatusCode::FAILURE;
+    } 
 
     // Initialization and registration of the histograms/tree
     m_tree = new TTree("SpacePoint_STEP","SpacePoint finder step" );
@@ -617,9 +625,12 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
         // event number
         m_track_evtNumber->push_back( m_current_EvtNumber );
 
+        const Trk::Perigee * perigee = nullptr; //track->perigeeParameters();
         const DataVector< const Trk::TrackStateOnSurface > * tsos = track->trackStateOnSurfaces();
-        // first hit
+        // first hit radius, we need to find the first measurement TSOS
+        // and look for the perigee
         bool fhfilled = false;
+        bool pfilled  = false;
         for( auto & _ts : *tsos)
         {
             if( _ts->type(Trk::TrackStateOnSurface::Measurement) )
@@ -628,38 +639,52 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
                 const Amg::Vector3D pfh = _ts->trackParameters()->position();
                 m_track_radiusFirstHit->push_back(sqrt(pfh[0]*pfh[0]+pfh[1]*pfh[1]));
                 fhfilled = true;
+                //break;
+            }
+            
+            if( _ts->type(Trk::TrackStateOnSurface::Perigee) )
+            {
+                // Asumming from inside to outside
+                perigee = dynamic_cast<const Trk::Perigee*>(_ts->trackParameters());
+                pfilled = true;
+            }
+
+            if( fhfilled && pfilled ) 
+            {
                 break;
             }
         }
+
+        // Not founded a measurament TSOS (it should never happen)
         if( ! fhfilled )
         {
             m_track_radiusFirstHit->push_back(-1.);
         }
 
-        //const Trk::Perigee * perigee = track->perigeeParameters();
-        // Check if the perigee is available, if not we need to extrapolate it
-        //if( perigee == nullptr )
-        bool pfilled = false;
-        if( tsos != nullptr )
+        // not founded a perigee TSOS, then we need to extrapolate it from the front
+        // (or from the first measurement?)
+        if( perigee == nullptr )
         {
-            // Fill the radius first hit for the first measurement type
-            if(tsos->front() != nullptr)
+            Trk::PerigeeSurface persurf;
+            const Trk::TrackParameters * pr = m_extrapolator->extrapolate(*tsos->front()->trackParameters(),
+                    persurf,Trk::anyDirection,false,Trk::nonInteracting);
+            if( pr != nullptr )
             {
-                const Trk::TrackParameters * perigee = tsos->front()->trackParameters();
-                if( perigee != nullptr )
-                {
-                    m_track_d0->push_back( perigee->parameters()[Trk::d0] );
-                    m_track_z0->push_back( perigee->parameters()[Trk::z0] );
-                    m_track_pt->push_back( perigee->pT()*1e-3 );
-                    m_track_phi0->push_back( perigee->parameters()[Trk::phi0] );
-                    m_track_eta->push_back( perigee->eta() );
-                    m_track_charge->push_back( perigee->charge() );
-                    pfilled = true;
-                }
+                perigee = dynamic_cast<const Trk::Perigee*>(pr);
             }
         }
-        if( ! pfilled )
-        //if( perigee == nullptr )
+
+        // Filling perigee related variables
+        if( perigee != nullptr )
+        {
+                m_track_d0->push_back( perigee->parameters()[Trk::d0] );
+                m_track_z0->push_back( perigee->parameters()[Trk::z0] );
+                m_track_pt->push_back( perigee->pT()*1e-3 );
+                m_track_phi0->push_back( perigee->parameters()[Trk::phi0] );
+                m_track_eta->push_back( perigee->eta() );
+                m_track_charge->push_back( perigee->charge() );
+        }
+        else
         {
             ATH_MSG_DEBUG("Perigee track parameters not found in " << i << "-track");
             m_track_d0->push_back( 1e10 );
@@ -669,15 +694,6 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
             m_track_eta->push_back( 1e10 );
             m_track_charge->push_back( 0 );
         }
-        /*else
-        {
-            m_track_d0->push_back( perigee->parameters()[Trk::d0] );
-            m_track_z0->push_back( perigee->parameters()[Trk::z0] );
-            m_track_pt->push_back( perigee->pT()*1e-3 );
-            m_track_phi0->push_back( perigee->parameters()[Trk::phi0] );
-            m_track_eta->push_back( perigee->eta() );
-            m_track_charge->push_back( perigee->charge() );
-        }*/
         
         // Has this track a gen-particle associated?
         // using the TrackTruth, where the containing particleLink is the 'bestMatch'
