@@ -618,11 +618,31 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
         m_track_evtNumber->push_back( m_current_EvtNumber );
 
         const DataVector< const Trk::TrackStateOnSurface > * tsos = track->trackStateOnSurfaces();
+        // first hit
+        bool fhfilled = false;
+        for( auto & _ts : *tsos)
+        {
+            if( _ts->type(Trk::TrackStateOnSurface::Measurement) )
+            {
+                // Asumming from inside to outside
+                const Amg::Vector3D pfh = _ts->trackParameters()->position();
+                m_track_radiusFirstHit->push_back(sqrt(pfh[0]*pfh[0]+pfh[1]*pfh[1]));
+                fhfilled = true;
+                break;
+            }
+        }
+        if( ! fhfilled )
+        {
+            m_track_radiusFirstHit->push_back(-1.);
+        }
+
+        //const Trk::Perigee * perigee = track->perigeeParameters();
+        // Check if the perigee is available, if not we need to extrapolate it
+        //if( perigee == nullptr )
         bool pfilled = false;
         if( tsos != nullptr )
         {
-            // Note the perigee IS NOT for sure the front element: see InDetPhysValTruthDecoratorTool a
-            // way to extrapolate if needed... FIXME!!
+            // Fill the radius first hit for the first measurement type
             if(tsos->front() != nullptr)
             {
                 const Trk::TrackParameters * perigee = tsos->front()->trackParameters();
@@ -634,13 +654,10 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
                     m_track_phi0->push_back( perigee->parameters()[Trk::phi0] );
                     m_track_eta->push_back( perigee->eta() );
                     m_track_charge->push_back( perigee->charge() );
-                    const Amg::Vector3D pfh = perigee->position();
-                    m_track_radiusFirstHit->push_back(sqrt(pfh[0]*pfh[0]+pfh[1]*pfh[1]));
                     pfilled = true;
                 }
             }
         }
-        //const Trk::Perigee * perigee = track->perigeeParameters();
         if( ! pfilled )
         //if( perigee == nullptr )
         {
