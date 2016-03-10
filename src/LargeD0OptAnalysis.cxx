@@ -610,10 +610,6 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
 {
     this->prepareTrackTreeRelated(recoTracks->size());
 
-    // How to avoid duplicated tracks??
-    // XXX: Be carefull!! Seems duplicated tracks because the front-TSOS
-    // contains exactly the same values, but the track is defined by 
-    // more things, right? It should be checked
     for(size_t i = 0; i < recoTracks->size(); ++i)
     {
         const Trk::Track * track = (*recoTracks)[i];
@@ -625,33 +621,41 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
         // event number
         m_track_evtNumber->push_back( m_current_EvtNumber );
 
-        const Trk::Perigee * perigee = nullptr; //track->perigeeParameters();
+        const Trk::Perigee * perigee = nullptr; 
         const DataVector< const Trk::TrackStateOnSurface > * tsos = track->trackStateOnSurfaces();
         // first hit radius, we need to find the first measurement TSOS
         // and look for the perigee
         bool fhfilled = false;
         bool pfilled  = false;
-        for( auto & _ts : *tsos)
+        if( tsos != nullptr)
         {
-            if( _ts->type(Trk::TrackStateOnSurface::Measurement) )
+            for( auto & _ts : *tsos)
             {
-                // Asumming from inside to outside
-                const Amg::Vector3D pfh = _ts->trackParameters()->position();
-                m_track_radiusFirstHit->push_back(sqrt(pfh[0]*pfh[0]+pfh[1]*pfh[1]));
-                fhfilled = true;
-                //break;
-            }
-            
-            if( _ts->type(Trk::TrackStateOnSurface::Perigee) )
-            {
-                // Asumming from inside to outside
-                perigee = dynamic_cast<const Trk::Perigee*>(_ts->trackParameters());
-                pfilled = true;
-            }
+                if( _ts == nullptr || _ts->trackParameters() == nullptr)
+                {
+                    continue;
+                }
 
-            if( fhfilled && pfilled ) 
-            {
-                break;
+                if( _ts->type(Trk::TrackStateOnSurface::Measurement) )
+                {
+                    // Asumming from inside to outside
+                    const Amg::Vector3D pfh = _ts->trackParameters()->position();
+                    m_track_radiusFirstHit->push_back(sqrt(pfh[0]*pfh[0]+pfh[1]*pfh[1]));
+                    fhfilled = true;
+                    //break;
+                }
+                
+                if( _ts->type(Trk::TrackStateOnSurface::Perigee) )
+                {
+                    // Asumming from inside to outside
+                    perigee = dynamic_cast<const Trk::Perigee*>(_ts->trackParameters());
+                    pfilled = true;
+                }
+
+                if( fhfilled && pfilled ) 
+                {
+                    break;
+                }
             }
         }
 
@@ -663,7 +667,7 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
 
         // not founded a perigee TSOS, then we need to extrapolate it from the front
         // (or from the first measurement?)
-        if( perigee == nullptr )
+        if( perigee == nullptr && tsos != nullptr )
         {
             Trk::PerigeeSurface persurf;
             const Trk::TrackParameters * pr = m_extrapolator->extrapolate(*tsos->front()->trackParameters(),
