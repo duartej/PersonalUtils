@@ -101,6 +101,8 @@ class ExtractTruthPRDInfo : public AthAlgorithm
         std::string m_streamHist;
         TTree * m_tree;
         TruthHit m_hits;
+        // The deposited energy of the gen particles/simHits
+        std::vector<float> * m_energyTruth;
 };
 
 #endif // EXTRACTTRUTHPRDINFO_H

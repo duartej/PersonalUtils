@@ -68,7 +68,8 @@ ExtractTruthPRDInfo::ExtractTruthPRDInfo(const std::string& name, ISvcLocator* p
     m_simHitsTRT("TRTUncompressedHits"),
     m_streamHist("SIMHITS"),
     m_tree(nullptr),
-    m_hits({0,0,0,0,0,0,0,0,0,0,0,0})
+    m_hits({0,0,0,0,0,0,0,0,0,0,0,0}),
+    m_energyTruth(nullptr)
 {
     /** switches to control the analysis through job options */
     // Note that if the reco mode is set to false, it is uses the SimHit collections
@@ -119,6 +120,7 @@ StatusCode ExtractTruthPRDInfo::initialize()
             "linked_pixel/I:total_pixel/I:linked_sct/I:total_sct/I:"\
             "linked_silicon/I:total_silicon/I:linked_trt/I:total_trt/I:"\
             "linked_all/I:total_all/I");
+    m_tree->Branch("energy_truth",&m_energyTruth);
 
     return StatusCode::SUCCESS;
 }		 
@@ -136,6 +138,9 @@ StatusCode ExtractTruthPRDInfo::execute()
 {
     ++m_processedEvts;
     ATH_MSG_DEBUG(" in execute()");
+
+    // Allocate memory for the Tree-related datamembers
+    m_energyTruth = new std::vector<float>;
     
     
     // Event info related and hit processing
@@ -280,6 +285,8 @@ const std::pair<int,int> ExtractTruthPRDInfo::getLinkedAndTotalPRDs(const PRD_Co
                 }
                 continue;
             }
+            // Deposited energy
+            m_energyTruth->push_back(truthGen_it->second.cptr()->momentum().perp());
             ++nPRDsLinked;
             ATH_MSG_VERBOSE("PRD-ID:" << truthGen_it->first << " PARTICLE: " 
                     << truthGen_it->second.cptr()->pdg_id() << " [barcode:" 
@@ -318,6 +325,7 @@ StatusCode ExtractTruthPRDInfo::processHITSInput(const int & evtNumber,const int
             if( simhit.particleLink().isValid() )
             {
                 ++linkPixel;
+                m_energyTruth->push_back(simhit.particleLink().cptr()->momentum().perp());
             }
             ATH_MSG_VERBOSE("SIM-ID:" << simhit.identify() 
                 << " Has_Valid_ParticleLink: " << simhit.particleLink().isValid());
@@ -334,6 +342,7 @@ StatusCode ExtractTruthPRDInfo::processHITSInput(const int & evtNumber,const int
             if( simhit.particleLink().isValid() )
             {
                 ++linkSCT;
+                m_energyTruth->push_back(simhit.particleLink().cptr()->momentum().perp());
             }
             ATH_MSG_VERBOSE("SIM-ID:" << simhit.identify() 
                     << " Has_Valid_ParticleLink: " << simhit.particleLink().isValid());
@@ -350,16 +359,12 @@ StatusCode ExtractTruthPRDInfo::processHITSInput(const int & evtNumber,const int
             if( simhit.particleLink().isValid() )
             {
                 ++linkTRT;
+                m_energyTruth->push_back(simhit.particleLink().cptr()->momentum().perp());
             }
             ATH_MSG_VERBOSE("SIM-ID:" << simhit.GetHitID() 
                     << " Has_Valid_ParticleLink: " << simhit.particleLink().isValid());
         } 
     }
-    // --- FIXME:: TO BE DEPRECATED
-    //ATH_MSG_INFO(" ------------------: " <<  linkPixel << " " << linkSCT << " (" 
-    //        << (linkPixel+linkSCT) << ") " << linkTRT << " : " <<(linkPixel+linkSCT+linkTRT) );
-    //ATH_MSG_INFO(" ------------------: " << pixMap.size() << " " << sctMap.size() << " (" 
-    //        << (pixMap.size()+sctMap.size()) << ") " << trtMap.size() << " : " <<(pixMap.size()+sctMap.size()+trtMap.size()) );
 
     this->fillHitsTree(evtNumber,runNumber,
             linkPixel,pixMap.size(),linkSCT,sctMap.size(),linkTRT,trtMap.size());
@@ -432,6 +437,12 @@ void ExtractTruthPRDInfo::fillHitsTree(const int & evtNumber, const int & runNum
     //        << (linked_pixel+linked_sct+linked_trt) << " " << (total_pixel+total_sct+total_trt));
 
     m_tree->Fill();
+    // deallocate memory of tree-related vectors
+    if( m_energyTruth )
+    {
+        delete m_energyTruth;
+        m_energyTruth = nullptr;
+    }
 }
 
 void ExtractTruthPRDInfo::fillHitsTree(const int & evtNumber, const int & runNumber,
