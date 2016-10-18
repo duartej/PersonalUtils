@@ -142,6 +142,9 @@ class LargeD0OptAnalysis : public AthAlgorithm
         std::vector<int>   * m_track_genMatched;
         std::vector<int>   * m_track_charge;
         std::vector<int>   * m_track_pdgId;
+        std::vector<int>   * m_track_isLRT;
+        std::vector<int>   * m_track_isSiSeeded;
+        std::vector<int>   * m_track_isTRTSeeded;
         std::vector<float> * m_track_d0;
         std::vector<float> * m_track_z0;
         std::vector<float> * m_track_pt;

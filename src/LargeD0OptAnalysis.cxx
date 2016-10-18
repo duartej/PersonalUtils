@@ -127,6 +127,9 @@ LargeD0OptAnalysis::LargeD0OptAnalysis(const std::string& name, ISvcLocator* pSv
     m_track_genMatched(nullptr),
     m_track_charge(nullptr),
     m_track_pdgId(nullptr),
+    m_track_isLRT(nullptr),
+    m_track_isSiSeeded(nullptr),
+    m_track_isTRTSeeded(nullptr),
     m_track_d0(nullptr),
     m_track_z0(nullptr),
     m_track_pt(nullptr),
@@ -147,17 +150,22 @@ LargeD0OptAnalysis::LargeD0OptAnalysis(const std::string& name, ISvcLocator* pSv
     m_track_hits_nSCTDoubleHoles(nullptr),
     m_track_hits_nContribPixelLayers(nullptr),
     m_track_hits_nBLayerOutliers(nullptr),
-    m_vector_reg_tracks_int{&m_track_genMatched, &m_track_charge, 
-                     &m_track_pdgId,&m_track_evtNumber,
-                     &m_track_hits_nBLayers, &m_track_hits_nPixelHoles,
-                     &m_track_hits_nPixelHits,&m_track_hits_nGangedPixel, 
-                     &m_track_hits_nSCTHits, &m_track_hits_nSCTHoles,
-                     &m_track_hits_nOutliers,&m_track_hits_nBLayerSharedHits, 
-                     &m_track_hits_nPixelSharedHits,&m_track_hits_nSCTSharedHits,
-                     &m_track_hits_nSCTDoubleHoles,&m_track_hits_nContribPixelLayers,
-                     &m_track_hits_nBLayerOutliers},
-    m_vector_reg_tracks_float{&m_track_d0, &m_track_z0, &m_track_pt, &m_track_phi0, 
-                     &m_track_prob, &m_track_eta,&m_track_radiusFirstHit},
+    m_vector_reg_tracks_int{
+        &m_track_genMatched, &m_track_charge, 
+        &m_track_pdgId,&m_track_evtNumber,
+        &m_track_isLRT,&m_track_isSiSeeded,&m_track_isTRTSeeded,
+        &m_track_hits_nBLayers, &m_track_hits_nPixelHoles,
+        &m_track_hits_nPixelHits,&m_track_hits_nGangedPixel, 
+        &m_track_hits_nSCTHits, &m_track_hits_nSCTHoles,
+        &m_track_hits_nOutliers,&m_track_hits_nBLayerSharedHits, 
+        &m_track_hits_nPixelSharedHits,&m_track_hits_nSCTSharedHits,
+        &m_track_hits_nSCTDoubleHoles,&m_track_hits_nContribPixelLayers,
+        &m_track_hits_nBLayerOutliers
+        },
+    m_vector_reg_tracks_float{
+        &m_track_d0, &m_track_z0, &m_track_pt, &m_track_phi0, 
+        &m_track_prob, &m_track_eta,&m_track_radiusFirstHit
+        },
     m_tree_recoTracks(nullptr),
     m_dv_x(nullptr),
     m_dv_y(nullptr),
@@ -302,6 +310,9 @@ StatusCode LargeD0OptAnalysis::initialize()
     m_tree_recoTracks->Branch("genMatched",&m_track_genMatched);
     m_tree_recoTracks->Branch("charge",&m_track_charge);
     m_tree_recoTracks->Branch("pdgId",&m_track_pdgId);
+    m_tree_recoTracks->Branch("isLRT",&m_track_isLRT);
+    m_tree_recoTracks->Branch("isSiSeeded",&m_track_isSiSeeded);
+    m_tree_recoTracks->Branch("isTRTSeeded",&m_track_isTRTSeeded);
     m_tree_recoTracks->Branch("d0",&m_track_d0);
     m_tree_recoTracks->Branch("z0",&m_track_z0);
     m_tree_recoTracks->Branch("pt",&m_track_pt);
@@ -699,6 +710,14 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
             m_track_charge->push_back( 0 );
         }
         
+        //  Authors
+        m_track_isLRT->push_back(
+                track->info().patternRecoInfo(Trk::TrackInfo::TrackPatternRecoInfo::SiSpacePointsSeedMaker_LargeD0));
+        m_track_isSiSeeded->push_back(
+                track->info().patternRecoInfo(Trk::TrackInfo::TrackPatternRecoInfo::SiSPSeededFinder));
+        m_track_isTRTSeeded->push_back(
+                track->info().patternRecoInfo(Trk::TrackInfo::TrackPatternRecoInfo::TRTSeededTrackFinder));
+        
         // Has this track a gen-particle associated?
         // using the TrackTruth, where the containing particleLink is the 'bestMatch'
         // (when several GenParticle contribute to the hits of the track, the particle
@@ -714,6 +733,7 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
                 m_track_genMatched->push_back(1);
                 m_track_pdgId->push_back( (*it_truthMap).second.particleLink()->pdg_id() );
                 m_track_prob->push_back( (*it_truthMap).second.probability() );
+                //m_track_barcode->push_back( (*it_truthMap).second.particleLink()->barcode() );
             }
             else
             {
@@ -722,6 +742,7 @@ void LargeD0OptAnalysis::storeRecoTracksInfo(const TrackCollection * recoTracks,
                 m_track_genMatched->push_back(0);
                 m_track_pdgId->push_back( 0 );
                 m_track_prob->push_back( (*it_truthMap).second.probability() );
+                //m_track_barcode->push_back( 0 );
 
             }
         }
